@@ -1,5 +1,5 @@
-from sps import Node
 import argparse
+from sps import Node
 
 def main():
   parser = argparse.ArgumentParser(description="Launches an SPS Node in sever mode", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -10,8 +10,7 @@ def main():
   parser.add_argument("--subnet_mask", default="255.255.254.0", help="The ip mask to use when scanning the subnet for servers")
   args = parser.parse_args()
 
-  node = Node(server=True, **vars(args))
-  node.join()
+  node = Node(server=True, **vars(args)).join()
   
 if __name__ == "__main__":
   main()
