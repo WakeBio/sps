@@ -86,6 +86,7 @@ class Node:
 
   """Update subscription state and rebroadcast if necessary"""
   def _subscriptions_callback(self, data):
+    print("subscribe callback")
     (sender_address, addresses, subscriptions, sender_address_steps) = data
 
     update_sender = False # send an updated subscriptions message back to sender
@@ -327,5 +328,5 @@ class Node:
       if not packet:
         return None # socket closed
       data += packet
-    return packet
+    return data
   
