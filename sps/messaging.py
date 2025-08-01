@@ -39,7 +39,7 @@ class Node:
     self.state_rlock = threading.RLock()
 
 
-    logging.info(f"self.address = {self.address.mac}-{self.address.pid}", flush=True)
+    logging.info(f"self.address = {self.address.mac}-{self.address.pid}")
 
     self.subscribe("subscriptions", self._subscriptions_callback)
 

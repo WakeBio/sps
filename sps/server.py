@@ -16,6 +16,7 @@ def main():
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%H:%M:%S",
   )
+  del args.verbose
 
   Node(server=True, **vars(args)).join()
   
