@@ -39,7 +39,7 @@ class Node:
     self.state_rlock = threading.RLock()
 
 
-    print(f"self.address = {self.address}", flush=True)
+    logging.info(f"self.address = {self.address.mac}-{self.address.pid}", flush=True)
 
     self.subscribe("subscriptions", self._subscriptions_callback)
 
@@ -96,7 +96,7 @@ class Node:
 
   """Update subscription state and rebroadcast if necessary"""
   def _subscriptions_callback(self, data):
-    print("_subscriptions_callback: here")
+    logging.debug("_subscriptions_callback: here")
     (sender_address, addresses, subscriptions, routes) = data
 
     # below identifies if there is updated information to be sent to the sender (update_sender)
@@ -111,7 +111,7 @@ class Node:
         self.connections[sender_address].routes = routes
         new_routes = self._get_routes()
         if curr_routes != new_routes:
-          print(f"_subscriptions_callback: change in distance, {new_routes}")
+          logging.debug(f"_subscriptions_callback: change in distance, {new_routes}")
           update_sender = True
           state_updated = True
     
@@ -136,10 +136,10 @@ class Node:
               if address in subscriptions[topic] and address not in self.subscriptions[topic]:
                 self.subscriptions[topic].add(address)
             state_updated = True # for this address, the sender had more current data
-            print(f"_subscriptions_callback: sender ({sender_address}) has more accurate info about {address}")
+            logging.debug(f"_subscriptions_callback: sender ({sender_address}) has more accurate info about {address}")
           else:
             update_sender = True # for this address, this node has more current data
-            print(f"_subscriptions_callback: I ({self.address}) have more accurate info about {address} than sender ({sender_address})")
+            logging.debug(f"_subscriptions_callback: I ({self.address}) have more accurate info about {address} than sender ({sender_address})")
 
       # clear this node's expiration if set
       if self.addresses[self.address].expiration_time != None:
@@ -147,7 +147,7 @@ class Node:
         self.addresses[self.address].timestamp = time.time()
         state_updated = True
         update_sender = True
-        print("_subscriptions_callback: clear this node's expiration in addresses")
+        logging.debug("_subscriptions_callback: clear this node's expiration in addresses")
 
     # update sender
     if update_sender:
@@ -158,20 +158,20 @@ class Node:
       self._propagate_subscriptions(list(set(self.connections.keys())-{sender_address}))
 
     if not update_sender and not state_updated:
-      print("_subscriptions_callback: nothing new")
+      logging.debug("_subscriptions_callback: nothing new")
       
   ## thread functions ##
 
   """Periodically remove addresses and subscriptions if address has expired"""
   def _run_address_expiror(self, period_s):
     while True:
-      print("RUNNING EXPIROR")
-      print(self.addresses)
+      logging.debug("RUNNING EXPIROR")
+      logging.debug(self.addresses)
       now = time.time()
       with self.state_rlock:
         for address, address_state in list(self.addresses.items()):
           if address_state.expiration_time is not None and now > address_state.expiration_time:
-            print(f"address {address} expired")
+            logging.debug(f"address {address} expired")
             del self.addresses[address]
             for topic in self.subscriptions.keys():
               if address in self.subscriptions[topic]:
@@ -323,19 +323,19 @@ class Node:
     # crash on the next line, "Runtime error: dictionary changed size during iteration". seems to be pointing at picke.dumps
     msg = MSG(topic="subscriptions", data=pickle.dumps((self.address, self.addresses, self.subscriptions, routes)), addresses="you")
     for address in list(connection_addresses).copy():
-      print(f"_propagate_subscriptions: propagate to {address}")
+      logging.info(f"_propagate_subscriptions: propagate to {address}")
       success = self._send_msg(msg, self.connections[address].sock, self.connections[address].send_lock)
       if not success:
         self._close_connection(address)
 
   def _close_connection(self, connection_address):
-    print("CLOSING CONNECTION")
+    logging.debug("CLOSING CONNECTION")
     with self.state_rlock:
       if connection_address in self.connections:
-        print("removing connection")
+        logging.debug("removing connection")
 
         # remove this connection
-        print(f"_run_connection(): connection_lost, deleting from connections: {connection_address}")
+        logging.debug(f"_run_connection(): connection_lost, deleting from connections: {connection_address}")
         del self.connections[connection_address]
 
         # set expiration for all addresses only reachable via this connection
@@ -349,7 +349,7 @@ class Node:
         self._propagate_subscriptions(self.connections.keys())
         
       else:
-        print("connection already removed")
+        logging.debug("connection already removed")
 
   def _send_msg(self, msg, sock, send_lock):
     data = pickle.dumps(msg)
