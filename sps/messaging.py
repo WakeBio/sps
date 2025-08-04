@@ -315,7 +315,7 @@ class Node:
             if address not in routes or connection_steps+1 < routes[address].min_steps:
               routes[address] = Route(min_steps=connection_steps+1, min_connection_addresses=[connection_address])
             elif connection_steps+1 == routes[address].min_steps:
-              routes[address].min_connections.append(connection_address)
+              routes[address].min_connection_addresses.append(connection_address)
     return routes
 
   def _propagate_subscriptions(self, connection_addresses):
